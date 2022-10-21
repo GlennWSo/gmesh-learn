@@ -58,22 +58,29 @@ gmsh.model.mesh.field.setNumber(threshold, "LcMax", 20*resolution)
 gmsh.model.mesh.field.setNumber(threshold, "DistMin", 0.5*r)
 gmsh.model.mesh.field.setNumber(threshold, "DistMax", r)
 
-inlet_dist = gmsh.model.mesh.field.add("Distance")
-gmsh.model.mesh.field.setNumbers(inlet_dist, "FacesList", [inlet])
-inlet_thre = gmsh.model.mesh.field.add("Threshold")
-gmsh.model.mesh.field.setNumber(inlet_thre, "IField", inlet_dist)
-gmsh.model.mesh.field.setNumber(inlet_thre, "LcMin", 5*resolution)
-gmsh.model.mesh.field.setNumber(inlet_thre, "LcMax", 10*resolution)
-gmsh.model.mesh.field.setNumber(inlet_thre, "DistMin", 0.1)
-gmsh.model.mesh.field.setNumber(inlet_thre, "DistMax", 0.5)
+def set_threshold(dist_tags, lc_min=.01, lc_max=0.1, d_min=0.1, d_max=1):
+    distance_field = gmsh.model.mesh.field.add("Distance")
+    gmsh.model.mesh.field.setNumbers(distance_field, "FacesList", dist_tags)
+    threshold_field = gmsh.model.mesh.field.add("Threshold")
+    gmsh.model.mesh.field.setNumber(threshold_field, "IField", distance_field)
+    gmsh.model.mesh.field.setNumber(threshold_field, "LcMin", lc_min)
+    gmsh.model.mesh.field.setNumber(threshold_field, "LcMax", lc_max)
+    gmsh.model.mesh.field.setNumber(threshold_field, "DistMin", d_min)
+    gmsh.model.mesh.field.setNumber(threshold_field, "DistMax", d_max)
+    return threshold_field
+
+
+inlet_thre = set_threshold([inlet])
 
 minimum = gmsh.model.mesh.field.add("Min")
 gmsh.model.mesh.field.setNumbers(minimum, "FieldsList", [threshold, inlet_thre])
-gmsh.model.mesh.field.setAsBackgroundMesh(minimum)
+gmsh.model.mesh.field.setAsBackgroundMesh(inlet_thre)
 
 gmsh.model.occ.synchronize()
 gmsh.model.mesh.generate(3)
 
 output_name = "mesh3d.msh"
+gmsh.fltk.run()
 gmsh.write(output_name)
+
 print(f"saved mesh to file: {output_name}")
